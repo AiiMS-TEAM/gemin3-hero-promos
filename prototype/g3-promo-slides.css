@@ -1,0 +1,859 @@
+/*
+ * Gemin3 hero promo slides (g3-promo)
+ *
+ * Every rule is scoped to the g3-promo component. Fonts, colours and the comic
+ * style come from the aiims theme; nothing here depends on Tailwind utilities.
+ *
+ * Box size: the slide box is set by the hero grid outside the slide, so the
+ * only viewport media queries are the two that size it:
+ *   under 640px   portrait box, 2:3, 400px to 560px tall
+ *   640 to 1199   wide box, 2:1, at least 400px tall (hero is stacked)
+ *   1200 and up   fills the slider column (hero is two columns)
+ *
+ * Layout: everything inside the slide is laid out with container queries on
+ * the slide's own shape:
+ *   C          portrait, ratio under 0.85 (default): headline, product, card, full-width CTA
+ *   compact    C boxes from 0.7 or under 620px tall, plus B and A: the CTA sits beside the price
+ *   B          square-ish, 0.85 to 1.15
+ *   A          landscape, 1.15 and wider: full-width headline, card left, product right
+ *   A-wide     1.6 and wider: as A, sized to the height
+ *
+ * Accent: .g3-promo--mhi leads with red, .g3-promo--general leads with blue.
+ * The cashback starburst is red on both and sits at the lower right of the product.
+ * .g3-promo--product-tall (set when the product image is narrower than 1.5:1) puts
+ * the card on the left and the product full height on the right in B, A and A-wide.
+ */
+
+/* ---------- Tokens and box ---------- */
+
+.g3-promo {
+  --g3-ink: #040707;
+  --g3-white: #fff;
+  --g3-yellow: #f9ed43;
+  --g3-sun: #ffd84a;
+  --g3-red: #ea211a;
+  --g3-red-ink: #de1f19;   /* brand red, one step darker so white text passes AA (4.87:1) */
+  --g3-red-deep: #84130f;
+  --g3-sky: #24b3e8;
+  --g3-blue-ink: #0e6fb8;  /* white text passes AA (5.27:1) */
+  --g3-navy: #0a509f;
+  --g3-navy-deep: #0b3462;
+
+  --g3-accent: var(--g3-red-ink);
+  --g3-accent-dark: var(--g3-red-deep);
+  --g3-burst-rot: -8deg;
+
+  container: g3promo / size;
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  min-height: 400px;
+  max-height: 560px;
+  overflow: hidden;
+  background: linear-gradient(165deg, var(--g3-navy) 0%, #1479c9 55%, var(--g3-sky) 100%);
+  border: solid var(--g3-ink);
+  border-width: 5px 4px 5px 2px;
+  color: var(--g3-ink);
+  font-family: "Inter Tight", Inter, system-ui, sans-serif;
+  text-align: left;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 640px) {
+  .g3-promo {
+    aspect-ratio: 2 / 1;
+    max-height: none;
+  }
+}
+
+@media (min-width: 1200px) {
+  .g3-promo {
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 0;
+  }
+}
+
+.g3-promo *,
+.g3-promo *::before,
+.g3-promo *::after {
+  box-sizing: border-box;
+}
+
+.g3-promo--general {
+  --g3-accent: var(--g3-navy);
+  --g3-accent-dark: var(--g3-navy-deep);
+}
+
+/* ---------- Frame, panel and layout C (default) ---------- */
+
+.g3-promo__frame {
+  --g3-layout: "C";
+  --g3-f: clamp(6px, 2.2cqmin, 16px);
+  --g3-p: clamp(10px, 3.4cqmin, 26px);
+  --g3-gap: clamp(6px, 2cqmin, 16px);
+  --g3-lane: 22px;
+
+  /* Headline: sized to the panel width (the big line fills about 80%, the long
+     line about 94%), capped by the box height */
+  --g3-hw: calc(100cqw - 2 * var(--g3-f) - 2 * var(--g3-p) - 10px);
+  --g3-hl-cap: 14cqh;
+  --g3-hl-lg: clamp(34px, min(calc(var(--g3-hw) * 0.205), var(--g3-hl-cap)), 140px);
+  --g3-hl-sm: max(17px, min(calc(var(--g3-hw) * 0.102), calc(var(--g3-hl-lg) * 0.56)));
+  --g3-tag: max(16px, calc(var(--g3-hl-lg) * 0.38));
+
+  /* Everything else: width-led on tall boxes, height-led as the box gets squarer */
+  --g3-u: min(1cqw, 0.62cqh);
+  --g3-burst-d: clamp(92px, calc(var(--g3-u) * 28), 190px);
+  --g3-card-w: 70%;
+  --g3-overlap: 5cqh;          /* how far the card rides up over the product */
+  --g3-card-px: clamp(10px, calc(var(--g3-u) * 3.6), 22px);
+  --g3-offer-tab: clamp(11px, calc(var(--g3-u) * 3.3), 18px);
+  --g3-mlogo-w: clamp(96px, calc(var(--g3-u) * 34), 210px);
+  --g3-sys: clamp(15px, calc(var(--g3-u) * 5), 28px);
+  --g3-spec: clamp(13px, calc(var(--g3-u) * 3.9), 20px);
+  --g3-price: clamp(34px, calc(var(--g3-u) * 10.4), 64px);
+  --g3-only: calc(var(--g3-price) * 0.42);
+  --g3-cta: clamp(15px, calc(var(--g3-u) * 4.5), 26px);
+  --g3-terms: clamp(11px, 3cqw, 14px);
+  --g3-terms-main: clamp(12px, 3.6cqw, 18px);
+
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--g3-f);
+  padding: var(--g3-f) var(--g3-f) 0;
+}
+
+.g3-promo__panel {
+  --g3-sun-x: 50%;
+  --g3-sun-y: 50%;
+
+  position: relative;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "head"
+    "prod"
+    "card"
+    "cta";
+  row-gap: var(--g3-gap);
+  padding: var(--g3-p) var(--g3-p) calc(var(--g3-p) * 0.4 + var(--g3-lane));
+  border: 1.5px solid var(--g3-white);
+  background: var(--g3-yellow);
+}
+
+/* Sunburst: the rays sit on their own layer and turn slowly (rotation only, so the
+   browser composites it without repainting). A fixed glow sits on top of them. */
+.g3-promo__rays {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.g3-promo__rays::before,
+.g3-promo__rays::after {
+  content: "";
+  position: absolute;
+}
+
+.g3-promo__rays::before {
+  left: var(--g3-sun-x);
+  top: var(--g3-sun-y);
+  width: 200cqmax;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: repeating-conic-gradient(from -3deg,
+    var(--g3-yellow) 0deg 6deg, var(--g3-sun) 6.6deg 11.4deg, var(--g3-yellow) 12deg);
+  animation: g3-promo-rays 120s linear infinite;
+  will-change: rotate;
+}
+
+.g3-promo__rays::after {
+  inset: 0;
+  background:
+    radial-gradient(circle at var(--g3-sun-x) var(--g3-sun-y), rgb(255 255 255 / 0.75) 0, rgb(255 255 255 / 0) 24%),
+    radial-gradient(ellipse at var(--g3-sun-x) var(--g3-sun-y), rgb(255 160 20 / 0) 42%, rgb(255 150 20 / 0.34) 100%);
+}
+
+/* only the slide on show keeps turning */
+.slick-slide:not(.slick-current) .g3-promo__rays::before {
+  animation-play-state: paused;
+}
+
+/* ---------- Finance headline and tag ---------- */
+
+.g3-promo__head {
+  grid-area: head;
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  align-self: start;
+  text-align: center;
+}
+
+/* White letters with a black outline and a stepped black shadow, so the
+   headline reads as solid 3D lettering */
+.g3-promo__headline {
+  margin: 0;
+  font-family: "Super Corn", "Inter Tight", sans-serif;
+  font-weight: 400;
+  line-height: 0.86;
+  letter-spacing: -0.01em;
+  color: var(--g3-white);
+  rotate: -1deg;
+}
+
+.g3-promo__hl {
+  display: block;
+  white-space: nowrap;
+  -webkit-text-stroke: max(1px, 0.04em) var(--g3-ink);
+  text-shadow:
+    -0.012em 0.01em 0 var(--g3-ink), -0.024em 0.02em 0 var(--g3-ink),
+    -0.036em 0.03em 0 var(--g3-ink), -0.048em 0.04em 0 var(--g3-ink),
+    -0.06em 0.05em 0 var(--g3-ink), -0.072em 0.06em 0 var(--g3-ink);
+}
+
+.g3-promo__hl--lg {
+  font-size: var(--g3-hl-lg);
+}
+
+.g3-promo__hl--sm {
+  font-size: var(--g3-hl-sm);
+  padding-block: 0.08em;
+}
+
+/* Red lettering with a white keyline and a black outline, overlapping the line above */
+.g3-promo__tag {
+  position: relative;
+  z-index: 3;
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  margin: calc(var(--g3-tag) * -0.32) auto 0;
+  padding: 0;
+  font-family: "Super Corn", "Inter Tight", sans-serif;
+  font-size: var(--g3-tag);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--g3-red-ink);
+  white-space: nowrap;
+  text-shadow:
+    0.07em 0 0 var(--g3-white), -0.07em 0 0 var(--g3-white), 0 0.07em 0 var(--g3-white), 0 -0.07em 0 var(--g3-white),
+    0.049em 0.049em 0 var(--g3-white), -0.049em 0.049em 0 var(--g3-white), 0.049em -0.049em 0 var(--g3-white), -0.049em -0.049em 0 var(--g3-white),
+    0.13em 0 0 var(--g3-ink), -0.13em 0 0 var(--g3-ink), 0 0.13em 0 var(--g3-ink), 0 -0.13em 0 var(--g3-ink),
+    0.092em 0.092em 0 var(--g3-ink), -0.092em 0.092em 0 var(--g3-ink), 0.092em -0.092em 0 var(--g3-ink), -0.092em -0.092em 0 var(--g3-ink),
+    -0.1em 0.16em 0 var(--g3-ink);
+  translate: 14% 0;
+  rotate: -2.5deg;
+}
+
+/* ---------- Cashback starburst: red on both slides, lower right of the product ---------- */
+
+.g3-promo__burst {
+  grid-area: prod;
+  position: relative;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  justify-self: end;
+  align-self: end;
+  width: var(--g3-burst-d);
+  aspect-ratio: 1;
+  margin: 0;
+  translate: 12% 26%;
+  rotate: var(--g3-burst-rot);
+  container-type: inline-size;
+  font-family: "Super Corn", "Inter Tight", sans-serif;
+  font-weight: 400;
+  line-height: 0.9;
+  color: var(--g3-white);
+  text-align: center;
+}
+
+.g3-promo__burst-shape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.g3-promo__burst-shadow {
+  fill: var(--g3-ink);
+  translate: -7px 6px;
+}
+
+.g3-promo__burst-fill {
+  fill: var(--g3-red-ink);
+  stroke: var(--g3-ink);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
+}
+
+.g3-promo__burst-text {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  row-gap: 3cqi;
+  translate: 0 3%;
+}
+
+.g3-promo__burst-sm,
+.g3-promo__burst-lg {
+  display: block;
+  white-space: nowrap;
+  -webkit-text-stroke: max(0.5px, 0.0225em) var(--g3-ink);
+  text-shadow: -0.07em 0.045em 0 var(--g3-ink);
+}
+
+.g3-promo__burst-sm {
+  font-size: 13.5cqi;
+}
+
+.g3-promo__burst-lg {
+  font-size: 32cqi;
+  font-weight: 400;
+  color: var(--g3-yellow);
+}
+
+.g3-promo__ast {
+  color: inherit;
+  text-decoration: none;
+}
+
+.g3-promo__ast:focus-visible {
+  outline: 2px solid var(--g3-white);
+  outline-offset: 1px;
+}
+
+/* ---------- Product cluster ---------- */
+
+.g3-promo__product {
+  --g3-fill: 0.74;             /* share of the product box height the image may use */
+  grid-area: prod;
+  grid-row: prod-start / card-end;   /* runs down behind the card, as on the print slides */
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  min-height: 0;
+  container: g3prod / size;
+}
+
+/* --g3-cluster-r is the product image's width / height, set on the element from the image size */
+.g3-promo__cluster {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: min(calc(100cqw + var(--g3-p) * 0.6), calc(100cqh * var(--g3-fill) * var(--g3-cluster-r, 1.667)));
+  aspect-ratio: var(--g3-cluster-r, 1.667);
+  translate: -50% 0;
+}
+
+.g3-promo__cluster picture {
+  display: contents;
+}
+
+.g3-promo__cluster img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+}
+
+/* Contact shadows: a wide soft one under the cluster, a darker one under the
+   outdoor unit (position set per image with --g3-shadow-l, -r and -y) */
+.g3-promo__cluster::before,
+.g3-promo__cluster::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.g3-promo__cluster::before {
+  left: 4%;
+  right: 2%;
+  bottom: -4%;
+  height: 12%;
+  background: radial-gradient(closest-side, rgb(120 70 0 / 0.28), rgb(120 70 0 / 0));
+}
+
+.g3-promo__cluster::after {
+  left: var(--g3-shadow-l, 55%);
+  right: var(--g3-shadow-r, 0%);
+  bottom: var(--g3-shadow-y, -4%);
+  height: 9%;
+  background: radial-gradient(closest-side, rgb(4 7 7 / 0.5), rgb(4 7 7 / 0));
+}
+
+/* ---------- Offer card ---------- */
+
+.g3-promo__card {
+  grid-area: card;
+  position: relative;
+  z-index: 3;
+  align-self: end;
+  justify-self: start;
+  display: grid;
+  justify-items: start;
+  width: var(--g3-card-w);
+  /* the top margin leaves room for the offer tab, less the overlap onto the product */
+  margin: calc(var(--g3-offer-tab) * 0.9 - var(--g3-overlap)) 0 calc(var(--g3-price) * 0.8 + 6px) 0;
+  padding: calc(var(--g3-offer-tab) * 1.1) var(--g3-card-px) calc(var(--g3-price) * 0.75);
+  background: var(--g3-white);
+  border: solid var(--g3-ink);
+  border-width: 2px 2px 2.5px 1px;
+  rotate: -0.8deg;
+}
+
+.g3-promo__offer-tab {
+  position: absolute;
+  top: 0;
+  left: calc(var(--g3-card-px) * -0.5);
+  margin: 0;
+  padding: 0.34em 0.6em 0.22em;
+  font-family: "Marker Attack", "Inter Tight", sans-serif;
+  font-size: var(--g3-offer-tab);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--g3-ink);
+  white-space: nowrap;
+  background: var(--g3-yellow);
+  border: 1px solid var(--g3-ink);
+  translate: 0 -62%;
+  rotate: -3deg;
+}
+
+/* --g3-logo-scale evens out lockups of different proportions */
+.g3-promo__logo {
+  display: block;
+  width: calc(var(--g3-mlogo-w) * var(--g3-logo-scale, 1));
+  max-width: 100%;
+  height: auto;
+}
+
+.g3-promo__system,
+.g3-promo__spec {
+  margin: 0;
+  font-family: "Marker Attack", "Inter Tight", sans-serif;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--g3-ink);
+}
+
+.g3-promo__system {
+  margin-top: 0.3em;
+  font-size: var(--g3-sys);
+  line-height: 1.05;
+}
+
+.g3-promo__spec {
+  margin-top: 0.2em;
+  font-size: var(--g3-spec);
+  line-height: 1.1;
+}
+
+/* ---------- Price tag ---------- */
+
+.g3-promo__price {
+  position: absolute;
+  left: calc(var(--g3-card-px) * -0.7);
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  gap: 0.22em;
+  margin: 0;
+  padding: 0.12em 0.32em 0.06em 0.36em;
+  font-family: "Super Corn", "Inter Tight", sans-serif;
+  font-size: var(--g3-price);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--g3-white);
+  white-space: nowrap;
+  background: var(--g3-blue-ink);
+  border: solid var(--g3-ink);
+  border-width: 1.5px 2px 2px 1px;
+  box-shadow: -5px 5px 0 var(--g3-ink);
+  translate: 0 50%;
+  rotate: -2.5deg;
+}
+
+.g3-promo__only {
+  font-family: "Marker Attack", "Inter Tight", sans-serif;
+  font-size: var(--g3-only);
+  font-weight: 700;
+  rotate: -6deg;
+}
+
+.g3-promo__amount {
+  -webkit-text-stroke: max(0.5px, 0.02em) var(--g3-ink);
+  text-shadow: -0.07em 0.04em 0 var(--g3-ink);
+}
+
+/* ---------- Call to action ---------- */
+
+.g3-promo__cta {
+  grid-area: cta;
+  position: relative;
+  z-index: 3;
+  align-self: end;
+  justify-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin: 0;
+  padding: 0.5em 1.1em 0.42em;
+  font-family: "Super Corn", "Inter Tight", sans-serif;
+  font-size: var(--g3-cta);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--g3-white);
+  white-space: nowrap;
+  text-transform: none;
+  background: var(--g3-accent);
+  border: solid var(--g3-ink);
+  border-width: 1.5px 2px 2px 1px;
+  box-shadow: -4px 4px 0 var(--g3-ink);
+  cursor: pointer;
+  -webkit-text-stroke: max(0.5px, 0.02em) var(--g3-ink);
+  text-shadow: -0.06em 0.04em 0 var(--g3-ink);
+  transition: background-color 150ms ease, translate 150ms ease, box-shadow 150ms ease;
+}
+
+.g3-promo__cta:hover {
+  background: var(--g3-accent-dark);
+  translate: -1px 1px;
+  box-shadow: -3px 3px 0 var(--g3-ink);
+}
+
+.g3-promo__cta:focus-visible {
+  outline: 3px solid var(--g3-white);
+  outline-offset: 2px;
+  box-shadow: -4px 4px 0 var(--g3-ink), 0 0 0 8px var(--g3-ink);
+}
+
+/* Empty strip at the bottom of the panel that the slider dots sit in */
+.g3-promo__lane {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--g3-p) * 0.2);
+  height: var(--g3-lane);
+  pointer-events: none;
+}
+
+/* ---------- Terms strip ---------- */
+
+.g3-promo__terms {
+  display: grid;
+  gap: 0.3em;
+  margin: 0 calc(var(--g3-f) * -1);
+  padding: 0.55em 0.9em 0.6em;
+  color: var(--g3-white);
+  text-align: center;
+  background: var(--g3-red-ink);
+  border-top: 1.5px solid var(--g3-ink);
+}
+
+.g3-promo__terms-main {
+  margin: 0;
+  font-family: "Super Corn", "Inter Tight", sans-serif;
+  font-size: var(--g3-terms-main);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-shadow: -1px 1px 0 var(--g3-ink);
+}
+
+.g3-promo__small {
+  margin: 0;
+  font-family: "Inter Tight", Inter, system-ui, sans-serif;
+  font-size: var(--g3-terms);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* ---------- Compact: phones, squarer portrait boxes, B and A. The CTA moves beside the price ---------- */
+
+@container g3promo (min-aspect-ratio: 7 / 10) or (max-height: 620px) {
+  .g3-promo__frame {
+    --g3-layout: "C compact";
+    --g3-card-w: 64%;
+    --g3-overlap: 3.5cqh;
+    --g3-hl-cap: 13cqh;
+  }
+
+  .g3-promo__panel {
+    --g3-sun-x: 60%;
+    --g3-sun-y: 54%;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "head"
+      "prod"
+      "card";
+  }
+
+  /* the product runs to the right edge; the card overlaps its lower left */
+  .g3-promo__product {
+    --g3-fill: 0.8;
+  }
+
+  .g3-promo__cluster {
+    left: auto;
+    right: calc(var(--g3-p) * -0.6);
+    translate: 0 0;
+  }
+
+  /* centred on the card's bottom edge, level with the price tag */
+  .g3-promo__cta {
+    grid-area: card;
+    justify-self: end;
+    align-self: end;
+    margin-bottom: calc(var(--g3-price) * 0.8 + 6px - 22px);
+    margin-right: calc(var(--g3-p) * -0.9);
+    padding-inline: 0.8em;
+    rotate: 1.5deg;
+  }
+}
+
+/* ---------- Layout B, square-ish ---------- */
+
+@container g3promo (min-aspect-ratio: 17 / 20) {
+  .g3-promo__frame {
+    --g3-layout: "B";
+    --g3-card-w: 54%;
+    --g3-overlap: 9cqh;
+    --g3-burst-d: clamp(92px, 25cqmin, 190px);
+    --g3-card-px: clamp(10px, 3.2cqmin, 22px);
+    --g3-offer-tab: clamp(11px, 2.9cqmin, 18px);
+    --g3-mlogo-w: clamp(96px, 22cqmin, 180px);
+    --g3-sys: clamp(15px, 4.1cqmin, 28px);
+    --g3-spec: clamp(13px, 3.1cqmin, 20px);
+    --g3-price: clamp(32px, 9.5cqmin, 64px);
+    --g3-cta: clamp(15px, 4cqmin, 24px);
+    --g3-terms: clamp(11px, 2.2cqmin, 14px);
+    --g3-terms-main: clamp(12px, 2.8cqmin, 18px);
+  }
+
+  .g3-promo__cta {
+    rotate: 0deg;
+    margin-right: 0;
+  }
+
+  /* Squarish product images (.g3-promo--product-tall): card and CTA stack on the
+     left, the product takes the full height on the right */
+  .g3-promo--product-tall .g3-promo__frame {
+    --g3-sys: clamp(15px, 3.6cqmin, 26px);
+  }
+
+  .g3-promo--product-tall .g3-promo__panel {
+    grid-template-columns: minmax(0, 52fr) minmax(0, 48fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "head head"
+      "card prod"
+      "cta  prod";
+    column-gap: var(--g3-gap);
+  }
+
+  .g3-promo--product-tall .g3-promo__card {
+    width: 100%;
+    margin-top: calc(var(--g3-offer-tab) * 0.9);
+  }
+
+  .g3-promo--product-tall .g3-promo__cta {
+    grid-area: cta;
+    justify-self: stretch;
+    align-self: end;
+    margin: 0;
+    rotate: 0deg;
+  }
+
+  .g3-promo--product-tall .g3-promo__product {
+    --g3-fill: 0.9;
+    grid-row: prod;
+    margin-inline-start: 0;
+  }
+
+  .g3-promo--product-tall .g3-promo__burst {
+    grid-area: prod;
+    align-self: start;
+    justify-self: end;
+    translate: 12% -6%;
+  }
+}
+
+/* ---------- Layout A, landscape: full-width headline, card left, product right ---------- */
+
+@container g3promo (min-aspect-ratio: 23 / 20) {
+  .g3-promo__frame {
+    --g3-layout: "A";
+    --g3-card-w: 100%;
+    --g3-overlap: 0px;
+    --g3-hl-cap: 13cqh;
+    --g3-burst-d: clamp(92px, 24cqmin, 200px);
+    --g3-card-px: clamp(10px, 3cqmin, 22px);
+    --g3-offer-tab: clamp(11px, 2.7cqmin, 18px);
+    --g3-mlogo-w: clamp(96px, 22cqmin, 190px);
+    --g3-sys: clamp(15px, 4cqmin, 28px);
+    --g3-spec: clamp(13px, 3cqmin, 20px);
+    --g3-price: clamp(32px, 9.5cqmin, 66px);
+    --g3-cta: clamp(15px, 3.8cqmin, 24px);
+    --g3-terms: clamp(11px, 2.3cqmin, 14px);
+    --g3-terms-main: clamp(12px, 2.8cqmin, 18px);
+  }
+
+  .g3-promo__panel {
+    --g3-sun-x: 68%;
+    --g3-sun-y: 60%;
+    grid-template-columns: minmax(0, 44fr) minmax(0, 56fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "head  head"
+      "card  prod"
+      "card  cta";
+    column-gap: var(--g3-gap);
+  }
+
+  /* the product tucks a little behind the card's right edge */
+  .g3-promo__product {
+    margin-inline-start: -6cqw;
+  }
+
+  .g3-promo__product {
+    --g3-fill: 0.86;
+  }
+
+  .g3-promo__burst {
+    grid-area: 2 / 2 / 3 / 3;
+    translate: 14% 40%;
+  }
+
+  .g3-promo__cta {
+    grid-area: cta;
+    justify-self: start;
+    margin: 0;
+    rotate: 0deg;
+  }
+
+  .g3-promo--product-tall .g3-promo__panel {
+    grid-template-columns: minmax(0, 46fr) minmax(0, 54fr);
+  }
+
+  .g3-promo--product-tall .g3-promo__cta {
+    justify-self: stretch;
+  }
+
+  .g3-promo--product-tall .g3-promo__burst {
+    grid-area: prod;
+    translate: 12% -6%;
+  }
+}
+
+/* ---------- Layout A, wide (tablets, about 2:1) ---------- */
+
+@container g3promo (min-aspect-ratio: 8 / 5) {
+  .g3-promo__frame {
+    --g3-layout: "A-wide";
+    --g3-gap: clamp(6px, 1.6cqh, 14px);
+    --g3-hl-cap: 14.5cqh;
+    --g3-burst-d: clamp(96px, 28cqh, 190px);
+    --g3-card-px: clamp(10px, 3.2cqh, 22px);
+    --g3-offer-tab: clamp(11px, 2.8cqh, 18px);
+    --g3-mlogo-w: clamp(96px, 24cqh, 190px);
+    --g3-sys: clamp(15px, 4.4cqh, 28px);
+    --g3-spec: clamp(13px, 3.3cqh, 20px);
+    --g3-price: clamp(34px, 10cqh, 64px);
+    --g3-cta: clamp(15px, 4.2cqh, 24px);
+  }
+
+  .g3-promo__panel {
+    --g3-sun-x: 70%;
+    --g3-sun-y: 58%;
+    grid-template-columns: minmax(0, 40fr) minmax(0, 60fr);
+  }
+
+  /* squarish products: headline and card on the left, product full height on the right */
+  .g3-promo--product-tall .g3-promo__frame {
+    --g3-hw: calc((100cqw - 2 * var(--g3-f) - 2 * var(--g3-p) - 10px - var(--g3-gap)) * 0.5);
+  }
+
+  .g3-promo--product-tall .g3-promo__panel {
+    grid-template-columns: minmax(0, 50fr) minmax(0, 50fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "head prod"
+      "card prod";
+  }
+
+  /* CTA beside the price, on the card's bottom edge */
+  .g3-promo--product-tall .g3-promo__cta {
+    grid-area: card;
+    justify-self: end;
+    align-self: end;
+    margin: 0 0 calc(var(--g3-price) * 0.8 + 6px - 22px) 0;
+    rotate: 1.5deg;
+  }
+}
+
+/* ---------- Motion: rays turn slowly; starburst pops and price nudges when a slide becomes active ---------- */
+
+@keyframes g3-promo-rays {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes g3-promo-pop {
+  from {
+    scale: 0.85;
+    rotate: calc(var(--g3-burst-rot) - 10deg);
+  }
+  to {
+    scale: 1;
+    rotate: var(--g3-burst-rot);
+  }
+}
+
+@keyframes g3-promo-nudge {
+  from {
+    translate: 0 calc(50% + 10px);
+  }
+  to {
+    translate: 0 50%;
+  }
+}
+
+.slick-current .g3-promo__burst {
+  animation: g3-promo-pop 400ms cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+.slick-current .g3-promo__price {
+  animation: g3-promo-nudge 420ms 120ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .g3-promo *,
+  .g3-promo *::before,
+  .g3-promo *::after,
+  .slick-current .g3-promo__burst,
+  .slick-current .g3-promo__price {
+    animation: none !important;
+    transition: none !important;
+  }
+}

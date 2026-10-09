@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<title>Slide Shot Frame</title>
+<!-- PROTOTYPE ONLY. Loads hero.html at an exact width (?w=375&slide=2) and pins the
+     slider column to the top-left corner on a magenta field, for cropped screenshots. -->
+<style>
+  html, body { margin: 0; background: #ff00ff; overflow: hidden; }
+  #clip { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; overflow: hidden; } /* visible while loading, cropped after */
+  iframe { position: absolute; left: 0; top: 0; display: block; border: 0; }
+</style>
+</head>
+<body>
+<div id="clip"><iframe id="f" title="Hero replica"></iframe></div>
+<script>
+  var q = new URLSearchParams(location.search);
+  var w = parseInt(q.get('w') || '375', 10);
+  var f = document.getElementById('f');
+  var clip = document.getElementById('clip');
+  f.style.width = w + 'px';
+  f.style.height = '2200px';
+  f.src = 'hero.html?autoplay=0&focus=slider&eager=1&slide=' + (q.get('slide') || '1') + (q.get('g3now') ? '&g3now=' + encodeURIComponent(q.get('g3now')) : '');
+  f.onload = function () {
+    var imgs = [].slice.call(f.contentDocument.querySelectorAll('.banner-v3-deal-slider img'));
+    var ready = Promise.all([f.contentDocument.fonts.ready].concat(imgs.map(function (i) { return i.decode().catch(function () {}); })));
+    var timeout = new Promise(function (r) { setTimeout(r, 3000); });
+    Promise.race([ready, timeout]).then(function () {
+      setTimeout(function () {
+        var r = f.contentDocument.querySelector('.rep-right').getBoundingClientRect();
+        f.style.left = -r.left + 'px';
+        f.style.top = -r.top + 'px';
+        clip.style.width = r.width + 'px';
+        clip.style.height = r.height + 'px';
+        // ?audit=1 runs the layout audit inside the frame and writes the result here
+        if (q.get('audit') === '1') {
+          f.contentWindow.g3AuditRun().then(function (t) {
+            var pre = document.createElement('pre');
+            pre.id = 'g3-audit';
+            pre.style.display = 'none';
+            pre.textContent = t;
+            document.body.appendChild(pre);
+          });
+        }
+      }, 600);
+    });
+  };
+</script>
+</body>
+</html>

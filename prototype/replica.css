@@ -1,0 +1,126 @@
+/*
+ * PROTOTYPE ONLY. Stands in for the aiims theme around the slider so the slides
+ * can be judged in context. None of this ships: the theme already provides the
+ * fonts, the Tailwind reset and the left hero panel.
+ */
+
+@font-face {
+  font-family: "Super Corn";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(fonts/SuperCorn.woff2) format("woff2");
+}
+
+@font-face {
+  font-family: "Marker Attack";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(fonts/Marker-Attack.ttf) format("truetype");
+}
+
+@font-face {
+  font-family: "Inter Tight";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(fonts/inter-tight-latin.woff2) format("woff2");
+}
+
+/* Tailwind preflight, as compiled into the theme */
+*, ::before, ::after { box-sizing: border-box; border: 0 solid #e5e7eb; }
+html { line-height: 1.5; -webkit-text-size-adjust: 100%; }
+body { margin: 0; line-height: inherit; font-family: "Inter Tight", sans-serif; background: #fff; }
+h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; }
+blockquote, dd, dl, figure, h1, h2, h3, h4, h5, h6, hr, p, pre { margin: 0; }
+a { color: inherit; text-decoration: inherit; }
+b, strong { font-weight: bolder; }
+button { color: inherit; font-family: inherit; font-size: 100%; font-weight: inherit; letter-spacing: inherit; line-height: inherit; margin: 0; padding: 0; text-transform: none; -webkit-appearance: button; background-color: transparent; background-image: none; cursor: pointer; }
+img, svg, picture { display: block; vertical-align: middle; }
+img { max-width: 100%; height: auto; }
+
+/* Tailwind utilities used by the hero markup */
+.h-full { height: 100%; }
+.relative { position: relative; }
+.w-full { width: 100%; }
+.overflow-hidden { overflow: hidden; }
+
+/* Fake page header so the hero does not sit on the window edge */
+.rep-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  background: #f4f4f4;
+  font: 600 13px/1 "Inter Tight", sans-serif;
+  color: #6b7280;
+  letter-spacing: 0.02em;
+}
+
+/* section.section-home-banner-v3 > grid */
+.section-home-banner-v3 { margin-top: 20px; }
+.rep-grid {
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+/* Left hero panel stand-in, at the real height measured on the live site */
+.rep-left {
+  position: relative;
+  height: var(--rep-left-h, 907px);
+  background: linear-gradient(to right, #0b3462, #0a509f);
+  border: solid #000;
+  border-width: 5px 4px 5px 2px;
+  display: flex;
+  align-items: flex-start;
+  padding: 28px;
+  color: rgb(255 255 255 / 0.7);
+  font: 600 13px/1.4 "Inter Tight", sans-serif;
+}
+
+.rep-left span {
+  border: 1px dashed rgb(255 255 255 / 0.45);
+  padding: 6px 10px;
+}
+
+.rep-tile {
+  max-width: 420px;
+  min-height: 166px;
+  margin-top: 8px;
+  background: linear-gradient(115deg, #ea211a 42%, #84130f 79%);
+  border: 1px solid #000;
+  padding: 16px 20px;
+  color: rgb(255 255 255 / 0.85);
+  font: 600 13px/1.4 "Inter Tight", sans-serif;
+}
+
+@media (min-width: 480px) { .rep-left { --rep-left-h: 760px; } }
+@media (min-width: 768px) { .rep-left { --rep-left-h: 732px; } }
+
+@media (min-width: 1200px) {
+  .section-home-banner-v3 { margin-top: 40px; margin-bottom: 30px; }
+  .rep-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; }
+  .rep-left { grid-column: span 7 / span 7; }
+  .rep-right { grid-column: span 5 / span 5; }
+  .rep-tile { display: none; }
+  /* Measured on the live site, 9 Oct 2026: 1200 = 864, 1280 = 769, 1440 = 739, 1600 = 699, 1920 = 619 */
+  .rep-left { --rep-left-h: calc(864px - (100vw - 1200px) * 1.1875); }
+}
+@media (min-width: 1280px) { .rep-left { --rep-left-h: calc(769px - (100vw - 1280px) * 0.1875); } }
+@media (min-width: 1440px) { .rep-left { --rep-left-h: calc(739px - (100vw - 1440px) * 0.25); } }
+@media (min-width: 1600px) { .rep-left { --rep-left-h: calc(699px - (100vw - 1600px) * 0.25); } }
+@media (min-width: 1920px) { .rep-left { --rep-left-h: 619px; } }
+
+/* ?focus=slider: hide the stacked left panel and tile so screenshots show the slide */
+@media (max-width: 1199px) {
+  .rep-focus .rep-left,
+  .rep-focus .rep-tile { display: none; }
+}
+
+.rep-footer { height: 80px; }
